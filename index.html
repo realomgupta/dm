@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Send me a message</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: Arial, sans-serif; background: #0f172a; color: white; padding: 20px; }
+    .card { width: 100%; max-width: 450px; background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); }
+    h1 { margin: 0 0 16px; font-size: 24px; }
+    form { display: flex; gap: 10px; }
+    input { flex: 1; padding: 12px 14px; border-radius: 10px; border: 1px solid #374151; background: #020617; color: white; outline: none; font-size: 15px; }
+    input:focus { border-color: #38bdf8; }
+    button { padding: 12px 18px; border: none; border-radius: 10px; background: #22c55e; color: white; font-size: 15px; cursor: pointer; }
+    button:hover { background: #16a34a; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    #status { margin-top: 12px; min-height: 20px; font-size: 14px; color: #93c5fd; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Send me a message</h1>
+    <form id="chat-form">
+      <input id="msg" type="text" placeholder="Type your message and press Enter" maxlength="1000" autocomplete="off" required />
+      <button id="send-btn" type="submit">Send</button>
+    </form>
+    <p id="status" role="status"></p>
+  </main>
+
+  <script>
+    const form = document.getElementById("chat-form");
+    const msgInput = document.getElementById("msg");
+    const sendBtn = document.getElementById("send-btn");
+    const statusText = document.getElementById("status");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const text = msgInput.value.trim();
+      if (!text) return;
+
+      sendBtn.disabled = true;
+      statusText.textContent = "Sending...";
+
+      try {
+        const response = await fetch("/.netlify/functions/send-message", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Message failed");
+
+        msgInput.value = "";
+        statusText.textContent = "Message sent ✅";
+        msgInput.focus();
+      } catch (error) {
+        statusText.textContent = "Error: " + error.message;
+      } finally {
+        sendBtn.disabled = false;
+        setTimeout(() => { statusText.textContent = ""; }, 4000);
+      }
+    });
+  </script>
+</body>
+</html>
